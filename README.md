@@ -12,6 +12,10 @@ subset of functionalities implemented.
 go get github.com/bertinatto/hubstorago
 ```
 
+## Code documentation
+
+[Godoc documentation] (https://godoc.org/github.com/bertinatto/hubstorago)
+
 ## Example
 
 ```go
@@ -68,7 +72,7 @@ func main() {
 		fmt.Println(log.Message)
 	}
 
-	// Some spider may store data in Collections.
+	// Some spiders may store data in Collections.
 	key := "testKey"
 	value := "testValue"
 	c.SetCollectionsKey("1111111", "s", "test", key, value)
