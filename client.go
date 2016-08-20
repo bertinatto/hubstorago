@@ -32,7 +32,9 @@ func (c *Client) urlJoin(parts []string) string {
 		base = defaultEndpoint
 	}
 	for i := 0; i < len(parts); i++ {
-		s = append(s, strings.Trim(parts[i], "/"))
+		if part := strings.Trim(parts[i], "/"); part != "" {
+			s = append(s, part)
+		}
 	}
 	url := append([]string{base}, s...)
 	return strings.Join(url, "/")
@@ -62,6 +64,22 @@ func (c *Client) SetCollectionsKey(pid, typeStore, name, k, v string) error {
 	return c.request("POST", url, b.Bytes(), nil)
 }
 
+type ErrorHttpBadStatus struct {
+	Code int
+}
+
+func (e *ErrorHttpBadStatus) Error() string {
+	return fmt.Sprintf("Bad status code: %d", e.Code)
+}
+
+type ErrorJsonBadResponse struct {
+	Body string
+}
+
+func (e *ErrorJsonBadResponse) Error() string {
+	return fmt.Sprintf("Bad JSON response: %d", e.Body)
+}
+
 // request fetches data from Hubstorage and stores the return in out.
 // It speaks JSON only. If something goes wrong, the it passes down the error.
 func (c *Client) request(method, url string, in []byte, out interface{}) error {
@@ -78,11 +96,14 @@ func (c *Client) request(method, url string, in []byte, out interface{}) error {
 	if err != nil {
 		return err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return &ErrorHttpBadStatus{Code: resp.StatusCode}
+	}
 	if _, err := io.Copy(b, resp.Body); err != nil {
 		return err
 	}
 	if err := json.NewDecoder(b).Decode(out); err != nil {
-		return err
+		return &ErrorJsonBadResponse{Body: err.Error()}
 	}
 	return nil
 }
