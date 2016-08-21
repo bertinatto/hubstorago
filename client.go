@@ -40,46 +40,6 @@ func (c *Client) urlJoin(parts []string) string {
 	return strings.Join(url, "/")
 }
 
-// GetCollectionsKey returns the value for k.
-func (c *Client) GetCollectionsKey(pid, typeStore, name, k string) (*CollectionsData, error) {
-	var d CollectionsData
-	url := c.urlJoin([]string{"collections", pid, typeStore, name, k})
-	if err := c.request("GET", url, nil, &d); err != nil {
-		return nil, err
-	}
-	return &d, nil
-
-}
-
-// SetCollectionsKey sets the value for k.
-func (c *Client) SetCollectionsKey(pid, typeStore, name, k, v string) error {
-	entry := collectionEntry{
-		Key:   k,
-		Value: v}
-	b := new(bytes.Buffer)
-	if err := json.NewEncoder(b).Encode(entry); err != nil {
-		return err
-	}
-	url := c.urlJoin([]string{"collections", pid, typeStore, name})
-	return c.request("POST", url, b.Bytes(), nil)
-}
-
-type ErrorHttpBadStatus struct {
-	Code int
-}
-
-func (e *ErrorHttpBadStatus) Error() string {
-	return fmt.Sprintf("Bad status code: %d", e.Code)
-}
-
-type ErrorJsonBadResponse struct {
-	Body string
-}
-
-func (e *ErrorJsonBadResponse) Error() string {
-	return fmt.Sprintf("Bad JSON response: %d", e.Body)
-}
-
 // request fetches data from Hubstorage and stores the return in out.
 // It speaks JSON only. If something goes wrong, the it passes down the error.
 func (c *Client) request(method, url string, in []byte, out interface{}) error {
@@ -106,6 +66,30 @@ func (c *Client) request(method, url string, in []byte, out interface{}) error {
 		return &ErrorJsonBadResponse{Body: err.Error()}
 	}
 	return nil
+}
+
+// GetCollectionsKey returns the value for k.
+func (c *Client) GetCollectionsKey(pid, typeStore, name, k string) (*CollectionsData, error) {
+	var d CollectionsData
+	url := c.urlJoin([]string{"collections", pid, typeStore, name, k})
+	if err := c.request("GET", url, nil, &d); err != nil {
+		return nil, err
+	}
+	return &d, nil
+
+}
+
+// SetCollectionsKey sets the value for k.
+func (c *Client) SetCollectionsKey(pid, typeStore, name, k, v string) error {
+	entry := collectionEntry{
+		Key:   k,
+		Value: v}
+	b := new(bytes.Buffer)
+	if err := json.NewEncoder(b).Encode(entry); err != nil {
+		return err
+	}
+	url := c.urlJoin([]string{"collections", pid, typeStore, name})
+	return c.request("POST", url, b.Bytes(), nil)
 }
 
 // Items returns the items collected in jobkey.
